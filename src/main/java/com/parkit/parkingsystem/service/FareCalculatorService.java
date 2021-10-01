@@ -35,24 +35,28 @@ public class FareCalculatorService {
         }
     }
     
-    /**
+    /**@author Mo-BiuS
      * @param d Date
      * @return double representing the number of hour elapsed from the 1st January 2000.
      */
     protected double dateToHour(Date d) {
-    	double year = d.getYear()-100;
+    	
+    	
+    	double year = d.getYear()-101;
     	if(year % 4 == 0) year *= 8784;
     	else year *= 8760;
     	
-    	double month = d.getMonth();
-    	if(month == 2) {
-        	if(year % 4 == 0) month *= 696;
-        	else month *= 672;
+    	double month = 0;
+    	for(int m = 1; m < d.getMonth(); m++) {
+        	if(m == 2) {
+            	if(d.getYear() % 4 == 0) month += 696;
+            	else month += 672;
+        	}
+        	else if(m % 2 == 0) month += 720;
+        	else month += 744;
     	}
-    	else if(month % 2 == 0) month *= 720;
-    	else month *= 744;
     	
-    	double day = d.getDay()*24;
+    	double day = (d.getDate()-1)*24;
     	
     	double hour = d.getHours();
     	
