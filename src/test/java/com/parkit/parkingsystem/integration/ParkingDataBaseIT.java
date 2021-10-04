@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.Date;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,6 +24,7 @@ import com.parkit.parkingsystem.dao.ParkingSpotDAO;
 import com.parkit.parkingsystem.dao.TicketDAO;
 import com.parkit.parkingsystem.integration.config.DataBaseTestConfig;
 import com.parkit.parkingsystem.integration.service.DataBasePrepareService;
+import com.parkit.parkingsystem.service.FareCalculatorService;
 import com.parkit.parkingsystem.service.ParkingService;
 import com.parkit.parkingsystem.util.InputReaderUtil;
 
@@ -99,7 +101,30 @@ public class ParkingDataBaseIT {
     public void testParkingLotExit(){
         testParkingACar();
         ParkingService parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO);
+        
+        Date inTime = new Date();
+        inTime.setTime( System.currentTimeMillis() - (  45 * 60 * 1000) );
+        ticketDAO.getTicket(vehiculeRegNumber.toString()).setInTime(inTime);
+        
         parkingService.processExitingVehicle();
-        //TODO: check that the fare generated and out time are populated correctly in the database
+        
+        Connection con = null;
+        try {
+            con = dataBaseTestConfig.getConnection();
+            ResultSet ticketResult = con.prepareStatement("select * from ticket where VEHICLE_REG_NUMBER = \""+vehiculeRegNumber+"\"").executeQuery();
+            
+            boolean isPriceRight = false;
+            
+            if(ticketResult.next()){
+            	isPriceRight = ticketResult.getDouble(4) == ticketDAO.getTicket(vehiculeRegNumber.toString()).getPrice();
+            }
+
+            assertTrue(isPriceRight);
+            
+        }catch (Exception ex){
+            logger.error("Error fetching next available slot",ex);
+        }finally {
+        	dataBaseTestConfig.closeConnection(con);
+        }
     }
 }
