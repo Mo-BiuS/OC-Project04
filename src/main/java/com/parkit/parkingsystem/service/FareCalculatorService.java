@@ -12,12 +12,19 @@ public class FareCalculatorService {
 	private static final Logger logger = LogManager.getLogger("FareCalculator");
 	
     public void calculateFare(Ticket ticket){
-        if( (ticket.getOutTime() == null) || (ticket.getOutTime().before(ticket.getInTime())) ){
+        if( (ticket.getOutTime() == null)){
+        	logger.info("getInTime: " + ticket.getInTime());
             throw new IllegalArgumentException("Out time provided is incorrect:"+ticket.getOutTime().toString());
         }
         
         double inHour = dateToHour(ticket.getInTime());
         double outHour = dateToHour(ticket.getOutTime());
+        
+        if( inHour > outHour ){
+        	logger.info("getInTime: " + ticket.getInTime());
+            throw new IllegalArgumentException("Out time provided is incorrect:"+ticket.getOutTime().toString());
+        }
+        
         double duration = outHour - inHour;
         
         logger.info("inHour : " + inHour + " | outHour : " + outHour + " | duration : " + duration);
