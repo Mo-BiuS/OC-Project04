@@ -151,4 +151,19 @@ public class FareCalculatorServiceTest {
         fareCalculatorService.calculateFare(ticket);
         assertEquals( 0 , ticket.getPrice());
     }
+    
+    @Test
+    public void calculateFareCarRecuringMember(){
+        Date inTime = new Date();
+        inTime.setTime( System.currentTimeMillis() - (  60 * 60 * 1000) );//20 minutes parking time should give free parking fare
+        Date outTime = new Date();
+        ParkingSpot parkingSpot = new ParkingSpot(1, ParkingType.CAR,false);
+
+        ticket.setInTime(inTime);
+        ticket.setOutTime(outTime);
+        ticket.setParkingSpot(parkingSpot);
+        ticket.setRecuringMember(true);
+        fareCalculatorService.calculateFare(ticket);
+        assertEquals( 0.95 * Fare.CAR_RATE_PER_HOUR , ticket.getPrice());
+    }
 }
