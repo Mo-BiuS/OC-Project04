@@ -22,20 +22,23 @@ public class FareCalculatorService {
         
         logger.info("inHour : " + inHour + " | outHour : " + outHour + " | duration : " + duration);
 
+        double price = 0;
         if(duration > 0.5) {
+        	price = duration;
         	switch (ticket.getParkingSpot().getParkingType()){
 	            case CAR: {
-	                ticket.setPrice(duration * Fare.CAR_RATE_PER_HOUR);
+	            	price *= Fare.CAR_RATE_PER_HOUR;
 	                break;
 	            }
 	            case BIKE: {
-	                ticket.setPrice(duration * Fare.BIKE_RATE_PER_HOUR);
+	            	price *= Fare.BIKE_RATE_PER_HOUR;
 	                break;
 	            }
 	            default: throw new IllegalArgumentException("Unkown Parking Type");
 	        }
+        	if(ticket.isRecuringMember())price *= 0.95;
         }
-        else  ticket.setPrice(0);
+        ticket.setPrice(price);
     }
     
     /**@author Mo-BiuS
