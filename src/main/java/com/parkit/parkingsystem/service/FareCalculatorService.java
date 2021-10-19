@@ -12,17 +12,15 @@ public class FareCalculatorService {
 	private static final Logger logger = LogManager.getLogger("FareCalculator");
 	
     public void calculateFare(Ticket ticket){
-        if( (ticket.getOutTime() == null)){
-        	logger.info("getInTime: " + ticket.getInTime());
-            throw new IllegalArgumentException("Out time provided is incorrect:"+ticket.getOutTime().toString());
+        if( (ticket.getOutTime() == null) || (ticket.getInTime() == null)){
+            throw new IllegalArgumentException("Neither time provided should be null");
         }
         
         double inHour = dateToHour(ticket.getInTime());
         double outHour = dateToHour(ticket.getOutTime());
         
         if( inHour > outHour ){
-        	logger.info("getInTime: " + ticket.getInTime());
-            throw new IllegalArgumentException("Out time provided is incorrect:"+ticket.getOutTime().toString());
+            throw new IllegalArgumentException("getInTime can't be after getOutTime");
         }
         
         double duration = outHour - inHour;
@@ -52,10 +50,10 @@ public class FareCalculatorService {
      * @param d Date
      * @return double representing the number of hour elapsed from the 1st January 2000.
      */
-    protected double dateToHour(Date d) {
+    @SuppressWarnings("deprecation")
+	protected double dateToHour(Date d) {
     	
-    	
-    	double year = d.getYear()-101;
+		double year = d.getYear()-101;
     	if(year % 4 == 0) year *= 8784;
     	else year *= 8760;
     	

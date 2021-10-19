@@ -46,6 +46,7 @@ public class ParkingSpotTest {
     	assertTrue(parkingSpotA.equals(parkingSpotA));
     	assertTrue(parkingSpotA.equals(parkingSpotB));
     	assertFalse(parkingSpotA.equals(parkingSpotC));
+    	assertFalse(parkingSpotA.equals(null));
     }
     @Test
     public void variableHashCodeTest(){
