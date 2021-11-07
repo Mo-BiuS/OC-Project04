@@ -24,7 +24,7 @@ public class InteractiveShellTest {
 	}
 	
 	@Test
-	void loadInterfaceTest() {
+	void loadInterfaceOption3Test() {
 		
 		InputStream sysInBackup = System.in; // backup System.in to restore it later
 		ByteArrayInputStream in = new ByteArrayInputStream("3".getBytes());
@@ -40,5 +40,5 @@ public class InteractiveShellTest {
 		assertTrue(outputStreamCaptor.toString().contains("3 Shutdown System"));
 		assertTrue(outputStreamCaptor.toString().contains("Exiting from the system!"));
 	}
-	
+
 }

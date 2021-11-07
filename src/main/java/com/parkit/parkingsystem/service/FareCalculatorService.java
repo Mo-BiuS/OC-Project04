@@ -53,9 +53,11 @@ public class FareCalculatorService {
     @SuppressWarnings("deprecation")
 	protected double dateToHour(Date d) {
     	
-		double year = d.getYear()-101;
-    	if(year % 4 == 0) year *= 8784;
-    	else year *= 8760;
+		double year = 0;
+    	for(int y = 1; y < d.getYear() - 101; y++) {
+        	if(y % 4 == 0) year += 8784;
+        	else year += 8760;
+    	}
     	
     	double month = 0;
     	for(int m = 1; m < d.getMonth(); m++) {

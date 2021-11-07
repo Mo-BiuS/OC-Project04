@@ -1,15 +1,10 @@
 package com.parkit.parkingsystem.integration;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.time.Clock;
-import java.time.Instant;
-import java.time.ZoneOffset;
 import java.util.Date;
 
 import org.apache.logging.log4j.LogManager;
@@ -22,14 +17,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.parkit.parkingsystem.constants.DBConstants;
-import com.parkit.parkingsystem.constants.Fare;
+import com.parkit.parkingsystem.config.DataBaseConfig;
 import com.parkit.parkingsystem.dao.ParkingSpotDAO;
 import com.parkit.parkingsystem.dao.TicketDAO;
-import com.parkit.parkingsystem.integration.config.DataBaseTestConfig;
-import com.parkit.parkingsystem.integration.service.DataBasePrepareService;
 import com.parkit.parkingsystem.model.Ticket;
-import com.parkit.parkingsystem.service.FareCalculatorService;
 import com.parkit.parkingsystem.service.ParkingService;
 import com.parkit.parkingsystem.util.InputReaderUtil;
 
@@ -38,10 +29,10 @@ public class ParkingDataBaseIT {
 
 	private static final Logger logger = LogManager.getLogger("ParkingDataBaseIT");
 	
-    private static DataBaseTestConfig dataBaseTestConfig = new DataBaseTestConfig();
+    private static DataBaseConfig dataBaseConfig = new DataBaseConfig();
     private static ParkingSpotDAO parkingSpotDAO;
     private static TicketDAO ticketDAO;
-    private static DataBasePrepareService dataBasePrepareService;
+    
 
     private static String vehiculeRegNumber = "ABCDEF";
     
@@ -51,17 +42,30 @@ public class ParkingDataBaseIT {
     @BeforeAll
     private static void setUp() throws Exception{
         parkingSpotDAO = new ParkingSpotDAO();
-        parkingSpotDAO.dataBaseConfig = dataBaseTestConfig;
+        parkingSpotDAO.dataBaseConfig = dataBaseConfig;
         ticketDAO = new TicketDAO();
-        ticketDAO.dataBaseConfig = dataBaseTestConfig;
-        dataBasePrepareService = new DataBasePrepareService();
+        ticketDAO.dataBaseConfig = dataBaseConfig;
     }
 
     @BeforeEach
     private void setUpPerTest() throws Exception {
         when(inputReaderUtil.readSelection()).thenReturn(1);
         when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn(vehiculeRegNumber);
-        dataBasePrepareService.clearDataBaseEntries();
+        Connection connection = null;
+        try{
+            connection = dataBaseConfig.getConnection();
+
+            //set parking entries to available
+            connection.prepareStatement("update parking set available = true").execute();
+
+            //clear ticket entries;
+            connection.prepareStatement("truncate table ticket").execute();
+
+        }catch(Exception e){
+            e.printStackTrace();
+        }finally {
+        	dataBaseConfig.closeConnection(connection);
+        }
     }
 
     @AfterAll
@@ -76,7 +80,7 @@ public class ParkingDataBaseIT {
         
         Connection con = null;
         try {
-            con = dataBaseTestConfig.getConnection();
+            con = dataBaseConfig.getConnection();
             ResultSet ticketResult = con.prepareStatement("select * from ticket where VEHICLE_REG_NUMBER = \""+vehiculeRegNumber+"\"").executeQuery();
             
             boolean isTicketRegistered = false;
@@ -89,9 +93,9 @@ public class ParkingDataBaseIT {
             	if(parkingResult.next() && !isVehiculeRegistered) {
 	               		isVehiculeRegistered = (parkingResult.getInt(2) == 0); //making sure that it's considered used
 	            }
-            	dataBaseTestConfig.closeResultSet(parkingResult);
+            	dataBaseConfig.closeResultSet(parkingResult);
             }
-            dataBaseTestConfig.closeResultSet(ticketResult);
+            dataBaseConfig.closeResultSet(ticketResult);
             
             assertTrue(isTicketRegistered && isVehiculeRegistered);
             
@@ -99,7 +103,7 @@ public class ParkingDataBaseIT {
             logger.error("Error fetching next available slot",ex);
             assertTrue(false);
         }finally {
-        	dataBaseTestConfig.closeConnection(con);
+        	dataBaseConfig.closeConnection(con);
         }
     }
     
@@ -117,7 +121,7 @@ public class ParkingDataBaseIT {
         
         Connection con = null;
         try {
-            con = dataBaseTestConfig.getConnection();
+            con = dataBaseConfig.getConnection();
             ResultSet ticketResult = con.prepareStatement("select * from ticket where VEHICLE_REG_NUMBER = \""+vehiculeRegNumber+"\"").executeQuery();
             
             boolean isPriceRight = false;
@@ -132,7 +136,7 @@ public class ParkingDataBaseIT {
             logger.error("Error fetching next available slot",ex);
             assertTrue(false);
         }finally {
-        	dataBaseTestConfig.closeConnection(con);
+        	dataBaseConfig.closeConnection(con);
         }
     }
     @Test
