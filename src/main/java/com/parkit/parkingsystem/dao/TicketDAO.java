@@ -11,6 +11,7 @@ import org.apache.logging.log4j.Logger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 
 public class TicketDAO {
@@ -20,6 +21,7 @@ public class TicketDAO {
     public DataBaseConfig dataBaseConfig = new DataBaseConfig();
 
     public boolean saveTicket(Ticket ticket){
+    	boolean isSaved = false;
         Connection con = null;
         try {
             con = dataBaseConfig.getConnection();
@@ -33,12 +35,15 @@ public class TicketDAO {
             ps.setTimestamp(5, (ticket.getOutTime() == null)?null: (new Timestamp(ticket.getOutTime().getTime())) );
             
             setIfReccurentUser(ticket);
-            return ps.execute();
-        }catch (Exception ex){
+            
+            isSaved = ps.execute();
+            dataBaseConfig.closePreparedStatement(ps);
+            return isSaved;
+        }catch (RuntimeException | SQLException | ClassNotFoundException ex){
             logger.error("Error fetching next available slot",ex);
         }finally {
             dataBaseConfig.closeConnection(con);
-            return false;
+            return isSaved;
         }
     }
 
@@ -64,7 +69,7 @@ public class TicketDAO {
             }
             dataBaseConfig.closeResultSet(rs);
             dataBaseConfig.closePreparedStatement(ps);
-        }catch (Exception ex){
+        }catch (RuntimeException | SQLException | ClassNotFoundException ex){
             logger.error("Error fetching next available slot",ex);
         }finally {
             dataBaseConfig.closeConnection(con);
@@ -81,23 +86,28 @@ public class TicketDAO {
             ps.setTimestamp(2, new Timestamp(ticket.getOutTime().getTime()));
             ps.setInt(3,ticket.getId());
             ps.execute();
+            dataBaseConfig.closePreparedStatement(ps);
             return true;
-        }catch (Exception ex){
+        }catch (RuntimeException | SQLException | ClassNotFoundException ex){
             logger.error("Error saving ticket info",ex);
         }finally {
             dataBaseConfig.closeConnection(con);
+            return false;
         }
-        return false;
+        
     }
     
     private void setIfReccurentUser(Ticket ticket) {
     	 Connection con = null;
          try {
              con = dataBaseConfig.getConnection();
-             PreparedStatement ps = con.prepareStatement("Select * from ticket where VEHICLE_REG_NUMBER=\""+ticket.getVehicleRegNumber()+"\" and OUT_TIME IS NOT NULL");
+             PreparedStatement ps = con.prepareStatement(DBConstants.GET_IF_RECCURENT_USER);
+             ps.setString(1, ticket.getVehicleRegNumber());
              ps.execute();
              ticket.setRecuringMember(ps.getResultSet().next());
-         }catch (Exception ex){
+             dataBaseConfig.closePreparedStatement(ps);
+             
+         }catch (RuntimeException | ClassNotFoundException | SQLException ex){
              logger.error("Error looking for reccurences",ex);
          }finally {
              dataBaseConfig.closeConnection(con);
