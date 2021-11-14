@@ -40,20 +40,26 @@ public class ParkingSpotDAO {
     public boolean updateParking(ParkingSpot parkingSpot){
         //update the availability for that parking slot
         Connection con = null;
+        PreparedStatement ps = null;
         int updateRowCount = 0;
         try {
             con = dataBaseConfig.getConnection();
-            PreparedStatement ps = con.prepareStatement(DBConstants.UPDATE_PARKING_SPOT);
+            ps = con.prepareStatement(DBConstants.UPDATE_PARKING_SPOT);
             ps.setBoolean(1, parkingSpot.isAvailable());
             ps.setInt(2, parkingSpot.getId());
-            ResultSet rs = ps.executeQuery();
-            while(rs.next()){
-            	updateRowCount++;
-            }
-            dataBaseConfig.closePreparedStatement(ps);          
+            updateRowCount = ps.executeUpdate();
+           
         }catch (RuntimeException | SQLException | ClassNotFoundException ex){
             logger.error("Error updating parking info",ex);
-            
+        }
+        
+        if(ps!=null){
+            try {
+                ps.close();
+                logger.info("Closing Prepared Statement");
+            } catch (SQLException e) {
+                logger.error("Error while closing prepared statement",e);
+            }
         }
         dataBaseConfig.closeConnection(con);
         return (updateRowCount > 0);
